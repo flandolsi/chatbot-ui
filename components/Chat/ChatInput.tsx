@@ -1,10 +1,16 @@
+import { FC } from 'react';
+import { SupportedExportFormats } from '@/types/export';
+
+
 import {
   IconArrowDown,
   IconBolt,
   IconBrandGoogle,
+  IconMicrophone,
   IconPlayerStop,
   IconRepeat,
   IconSend,
+  IconUpload,
 } from '@tabler/icons-react';
 import {
   KeyboardEvent,
@@ -343,6 +349,68 @@ export const ChatInput = ({
               <div className="h-4 w-4 animate-spin rounded-full border-t-2 border-neutral-800 opacity-60 dark:border-neutral-100"></div>
             ) : (
               <IconSend size={18} />
+            )}
+          </button>
+
+          <button
+            className="absolute left-10 top-2 rounded-sm p-1 text-neutral-800 opacity-60 hover:bg-neutral-200 hover:text-neutral-900 dark:bg-opacity-50 dark:text-neutral-100 dark:hover:text-neutral-200"
+            onClick={handleSend}
+          >
+            {messageIsStreaming ? (
+              <div className="h-4 w-4 animate-spin rounded-full border-t-2 border-neutral-800 opacity-60 dark:border-neutral-100"></div>
+            ) : (
+              <IconMicrophone size={18} />
+            )}
+          </button>
+
+
+          <input
+          id="import-csv"
+          className="sr-only"
+          tabIndex={-1}
+          type="file"
+          accept=".csv"
+          onChange={(e) => {
+            if (!e.target.files?.length) return;
+  
+            const file = e.target.files[0];
+            const reader = new FileReader();
+
+
+            reader.addEventListener(
+              "load",
+              () => {
+                // this will then display a text file
+                // console.log(reader.result)
+
+                setContent(content + ' "' +reader.result+ ' "');
+                
+              },
+              false,
+            );
+          
+            if (file) {
+              reader.readAsText(file);
+            }
+
+          }}
+          />
+
+          <button
+            className="absolute right-10 top-2 rounded-sm p-1 text-neutral-800 opacity-60 hover:bg-neutral-200 hover:text-neutral-900 dark:bg-opacity-50 dark:text-neutral-100 dark:hover:text-neutral-200"
+            onClick={() => {
+              const importFile = document.querySelector(
+                '#import-csv',
+              ) as HTMLInputElement;
+              if (importFile) {
+                importFile.click();
+              }
+            }}
+          >
+            {messageIsStreaming ? (
+              <div className="h-4 w-4 animate-spin rounded-full border-t-2 border-neutral-800 opacity-60 dark:border-neutral-100"></div>
+            ) : (
+              <IconUpload size={18} />
             )}
           </button>
 
