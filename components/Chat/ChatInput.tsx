@@ -1,12 +1,15 @@
 import { FC } from 'react';
 import { SupportedExportFormats } from '@/types/export';
 
+import {IconMail, IconSum, IconCode, IconGlobe } from '@tabler/icons-react';
+
 
 import {
   IconArrowDown,
   IconBolt,
   IconBrandGoogle,
   IconMicrophone,
+  IconMicrophoneOff,
   IconPlayerStop,
   IconRepeat,
   IconSend,
@@ -33,6 +36,9 @@ import HomeContext from '@/pages/api/home/home.context';
 import { PluginSelect } from './PluginSelect';
 import { PromptList } from './PromptList';
 import { VariableModal } from './VariableModal';
+import MicRecorder from 'mic-recorder-to-mp3';
+
+const Mp3Recorder = new MicRecorder({ bitRate: 128 });
 
 interface Props {
   onSend: (message: Message, plugin: Plugin | null) => void;
@@ -68,6 +74,14 @@ export const ChatInput = ({
   const [isModalVisible, setIsModalVisible] = useState(false);
   const [showPluginSelect, setShowPluginSelect] = useState(false);
   const [plugin, setPlugin] = useState<Plugin | null>(null);
+  const [isRecording,setIsRecording] = useState(false);
+  const [isBlocked,setIsBlocked] = useState(false);
+  const [blobURL, setBlobURL] = useState('');
+
+
+  //File names &   File content
+  const [filenames, setFileNames] = useState<string[]>([]);
+  const [filecontents, setFileContents] = useState<string[]>([]);
 
   const promptListRef = useRef<HTMLUListElement | null>(null);
 
@@ -90,8 +104,49 @@ export const ChatInput = ({
     }
 
     setContent(value);
+
+
     updatePromptListVisibility(value);
   };
+
+  const start = () => {
+    if (isBlocked) {
+      console.log('Permission Denied');
+    } else {
+      Mp3Recorder
+        .start()
+        .then(() => {
+          setIsRecording(true);
+        }).catch((e) => console.error(e));
+    }
+  };
+
+  const stop = () => {
+    Mp3Recorder
+      .stop()
+      .getMp3()
+      .then(([buffer, blob]) => {
+        const blobURL = URL.createObjectURL(blob)
+        console.log(blobURL);
+
+        setBlobURL(blobURL);
+
+        const file = new File(buffer, 'me-at-thevoice.mp3', {
+          type: blob.type,
+          lastModified: Date.now()
+        });
+
+        // TODO : instead of playing send mp3 to whipser and get text back
+        const player = new Audio(URL.createObjectURL(file));
+        player.play();
+
+        setIsRecording(false);
+      }).catch((e) => console.log(e));
+  };
+
+
+  
+
 
   const handleSend = () => {
     if (messageIsStreaming) {
@@ -103,8 +158,15 @@ export const ChatInput = ({
       return;
     }
 
-    onSend({ role: 'user', content }, plugin);
-    setContent('');
+        //This runs many times, should put it somewhere else
+    // Test implementation
+    const newcontent  = content?.replace(/{{(.*?)}}/g, (match, variable) => {
+      const index = filenames.indexOf(variable);
+      return filecontents[index];
+    });
+
+    onSend({ role: 'user', content: newcontent}, plugin);
+    setContent('');   // this reset content to empy so any setcontent before this is ignored (executed at the same time)
     setPlugin(null);
 
     if (window.innerWidth < 640 && textareaRef && textareaRef.current) {
@@ -177,6 +239,7 @@ export const ChatInput = ({
     }
   };
 
+  // Search for variables in prompt
   const parseVariables = (content: string) => {
     const regex = /{{(.*?)}}/g;
     const foundVariables = [];
@@ -216,6 +279,7 @@ export const ChatInput = ({
     }
   };
 
+  // This handle submit is ran when variable_model save button is clicked; we need one for chat_submit
   const handleSubmit = (updatedVariables: string[]) => {
     const newContent = content?.replace(/{{(.*?)}}/g, (match, variable) => {
       const index = variables.indexOf(variable);
@@ -264,6 +328,73 @@ export const ChatInput = ({
 
   return (
     <div className="absolute bottom-0 left-0 w-full border-transparent bg-gradient-to-b from-transparent via-white to-white pt-6 dark:border-white/20 dark:via-[#343541] dark:to-[#343541] md:pt-2">
+      
+      {selectedConversation.messages.length ==0 && (
+      <div className="stretch mx-2 mt-4 flex flex-row gap-3 last:mb-2 md:mx-4 md:mt-[52px] md:last:mb-6 lg:mx-auto lg:max-w-3xl">
+
+      
+          <button
+            className="text-sidebar flex w-[180px] flex-shrink-0 cursor-pointer select-none items-center gap-3 rounded-md border border-white/20 p-3 text-white transition-colors duration-200 hover:bg-gray-500/10"
+            onClick={() => {
+              setContent("Write template email about ")
+            }}
+          >
+
+          <IconMail size={32} />
+          {"Write template email about "}
+          </button>
+
+
+          <button
+            className="text-sidebar flex w-[180px] flex-shrink-0 cursor-pointer select-none items-center gap-3 rounded-md border border-white/20 p-3 text-white transition-colors duration-200 hover:bg-gray-500/10"
+            onClick={() => {
+              setContent("Summarize doc in 2 bullet points ");
+
+              const importFile = document.querySelector(
+                '#import-csv',
+              ) as HTMLInputElement;
+              if (importFile) {
+                importFile.click();
+              }
+              
+            }}
+          >
+
+          <IconSum size={32} />
+          {"Summarize doc in 2 bullet points "}
+          </button>
+
+          <button
+            className="text-sidebar flex w-[180px] flex-shrink-0 cursor-pointer select-none items-center gap-3 rounded-md border border-white/20 p-3 text-white transition-colors duration-200 hover:bg-gray-500/10"
+            onClick={() => {
+              setContent("Check following code ")
+            }}
+          >
+
+          <IconCode size={32} />
+          {"Check following code "}
+          </button>
+
+
+          <button
+            className="text-sidebar flex w-[180px] flex-shrink-0 cursor-pointer select-none items-center gap-3 rounded-md border border-white/20 p-3 text-white transition-colors duration-200 hover:bg-gray-500/10"
+            onClick={() => {
+              setContent("Give inspiration quote on ")
+            }}
+          >
+
+          <IconGlobe size={32} />
+          {"Give inspirational quote on "}
+          </button>
+
+      
+
+        </div>  
+        )}  
+
+      
+      
+      
       <div className="stretch mx-2 mt-4 flex flex-row gap-3 last:mb-2 md:mx-4 md:mt-[52px] md:last:mb-6 lg:mx-auto lg:max-w-3xl">
         {messageIsStreaming && (
           <button
@@ -317,6 +448,9 @@ export const ChatInput = ({
             </div>
           )}
 
+        
+
+
           <textarea
             ref={textareaRef}
             className="m-0 w-full resize-none border-0 bg-transparent p-0 py-2 pr-8 pl-10 text-black dark:bg-transparent dark:text-white md:py-3 md:pl-10"
@@ -352,16 +486,7 @@ export const ChatInput = ({
             )}
           </button>
 
-          <button
-            className="absolute left-10 top-2 rounded-sm p-1 text-neutral-800 opacity-60 hover:bg-neutral-200 hover:text-neutral-900 dark:bg-opacity-50 dark:text-neutral-100 dark:hover:text-neutral-200"
-            onClick={handleSend}
-          >
-            {messageIsStreaming ? (
-              <div className="h-4 w-4 animate-spin rounded-full border-t-2 border-neutral-800 opacity-60 dark:border-neutral-100"></div>
-            ) : (
-              <IconMicrophone size={18} />
-            )}
-          </button>
+
 
 
           <input
@@ -383,7 +508,20 @@ export const ChatInput = ({
                 // this will then display a text file
                 // console.log(reader.result)
 
-                setContent(content + ' "' +reader.result+ ' "');
+                //setContent(content + ' "' + reader.result + ' "');
+
+                // display file content as a "variable" to avoid filling the chat 
+                // TODO > add rationale to replace the variable when submited (or process)
+
+                setContent(content + '" {{' + file.name + '}} "');
+                filenames.push(file.name)
+
+                filecontents.push(reader.result)
+
+                console.log(filenames)
+                console.log(filecontents)
+
+
                 
               },
               false,
@@ -425,6 +563,27 @@ export const ChatInput = ({
             </div>
           )}
 
+        {/* Microphone button to be activated when whisper API is functional     */}
+          <div className="absolute bottom-12 left-0 lg:bottom-2 lg:-left-10">
+
+            {isRecording ? ( 
+            <button
+              className="flex h-7 w-7 items-center justify-center rounded-sm p-1 text-neutral-800 opacity-60 hover:bg-neutral-200 hover:text-neutral-900 dark:bg-opacity-50 dark:text-neutral-100 dark:hover:text-neutral-200"
+              onClick={stop}
+            >
+            <IconMicrophoneOff size={18} />
+            </button> ) : (
+
+            <button
+            className="flex h-7 w-7 items-center justify-center rounded-sm p-1 text-neutral-800 opacity-60 hover:bg-neutral-200 hover:text-neutral-900 dark:bg-opacity-50 dark:text-neutral-100 dark:hover:text-neutral-200"
+            onClick={start}
+            >
+            <IconMicrophone size={18} />
+            </button>
+            ) }
+
+          </div>
+
           {showPromptList && filteredPrompts.length > 0 && (
             <div className="absolute bottom-12 w-full">
               <PromptList
@@ -447,20 +606,7 @@ export const ChatInput = ({
           )}
         </div>
       </div>
-      <div className="px-3 pt-2 pb-3 text-center text-[12px] text-black/50 dark:text-white/50 md:px-4 md:pt-3 md:pb-6">
-        <a
-          href="https://github.com/mckaywrigley/chatbot-ui"
-          target="_blank"
-          rel="noreferrer"
-          className="underline"
-        >
-          ChatBot UI
-        </a>
-        .{' '}
-        {t(
-          "Chatbot UI is an advanced chatbot kit for OpenAI's chat models aiming to mimic ChatGPT's interface and functionality.",
-        )}
-      </div>
+      
     </div>
   );
 };
