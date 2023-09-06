@@ -109,7 +109,64 @@ export const ChatInput = ({
     updatePromptListVisibility(value);
   };
 
-  const start = () => {
+
+  const mp3toText = async (file) => {
+
+
+    const formData = new FormData();
+    formData.append('file', file, 'me-at-thevoice.mp3');
+
+    const response =  await fetch('http://127.0.0.1:5000/', {
+      headers: {
+        //'Content-Type':'application/json',
+        'Content-Type' :'audio/mp3',
+        //'Content-Type' : 'application/x-www-form-urlencoded',
+        //'Content-Type' : 'multipart/form-data', 
+      },
+      mode: 'cors',
+      method: 'POST',
+      body: file,
+      
+    })
+
+    let data = await response.json();
+
+    setContent(data)
+    
+    // .then((response) => {
+  //     // *** Check for HTTP failure
+  //     if (!response.ok) {
+  //         throw new Error("HTTP status " + response.status);
+  //     }
+  //     // *** Read and parse the JSON
+  //     console.log('HERE')
+  //     console.log(response.json())
+
+
+  //     return response.json();
+  // })
+  // .then((res) => {
+  //     // *** Use the object
+  //     console.log('OR HERE')
+  //     console.log(res)
+  // })
+  // .catch((error) => {
+  //     /* ...*** handle/report error, since this code doesn't return the promise chain...*/
+  //     console.log('OR RORR RHERE', error)
+  // });
+    
+    
+ 
+
+    //const result = await response.json()
+
+
+    //console.log(result);
+
+  };
+  
+
+  const start = (e) => {
     if (isBlocked) {
       console.log('Permission Denied');
     } else {
@@ -121,13 +178,12 @@ export const ChatInput = ({
     }
   };
 
-  const stop = () => {
+  const stop =  (e) => {
     Mp3Recorder
       .stop()
       .getMp3()
       .then(([buffer, blob]) => {
         const blobURL = URL.createObjectURL(blob)
-        console.log(blobURL);
 
         setBlobURL(blobURL);
 
@@ -136,12 +192,12 @@ export const ChatInput = ({
           lastModified: Date.now()
         });
 
-        // TODO : instead of playing send mp3 to whipser and get text back
-        const player = new Audio(URL.createObjectURL(file));
-        player.play();
+        mp3toText(file);
 
         setIsRecording(false);
       }).catch((e) => console.log(e));
+
+ 
   };
 
 
@@ -448,10 +504,8 @@ export const ChatInput = ({
             </div>
           )}
 
-        
-
-
           <textarea
+            id="input_area"
             ref={textareaRef}
             className="m-0 w-full resize-none border-0 bg-transparent p-0 py-2 pr-8 pl-10 text-black dark:bg-transparent dark:text-white md:py-3 md:pl-10"
             style={{
@@ -486,15 +540,12 @@ export const ChatInput = ({
             )}
           </button>
 
-
-
-
           <input
           id="import-csv"
           className="sr-only"
           tabIndex={-1}
           type="file"
-          accept=".csv"
+          accept=".csv,.txt,.py,.pdf,.doc,.docx"
           onChange={(e) => {
             if (!e.target.files?.length) return;
   
@@ -505,13 +556,6 @@ export const ChatInput = ({
             reader.addEventListener(
               "load",
               () => {
-                // this will then display a text file
-                // console.log(reader.result)
-
-                //setContent(content + ' "' + reader.result + ' "');
-
-                // display file content as a "variable" to avoid filling the chat 
-                // TODO > add rationale to replace the variable when submited (or process)
 
                 setContent(content + '" {{' + file.name + '}} "');
                 filenames.push(file.name)
@@ -520,8 +564,6 @@ export const ChatInput = ({
 
                 console.log(filenames)
                 console.log(filecontents)
-
-
                 
               },
               false,
@@ -569,17 +611,30 @@ export const ChatInput = ({
             {isRecording ? ( 
             <button
               className="flex h-7 w-7 items-center justify-center rounded-sm p-1 text-neutral-800 opacity-60 hover:bg-neutral-200 hover:text-neutral-900 dark:bg-opacity-50 dark:text-neutral-100 dark:hover:text-neutral-200"
-              onClick={stop}
+              onClick={() => {
+                stop();
+                document.querySelector('#input_area')?.classList.remove('animate-pulse', 'text-red-500','dark:text-red-500');
+                setContent('');
+
+              }}
             >
-            <IconMicrophoneOff size={18} />
+            <IconMicrophoneOff className="animate-pulse" size={18} color={'red'} />
             </button> ) : (
 
             <button
             className="flex h-7 w-7 items-center justify-center rounded-sm p-1 text-neutral-800 opacity-60 hover:bg-neutral-200 hover:text-neutral-900 dark:bg-opacity-50 dark:text-neutral-100 dark:hover:text-neutral-200"
-            onClick={start}
+            onClick={() => {
+              start();
+
+              document.querySelector('#input_area')?.classList.add('animate-pulse','text-red-500',  'dark:text-red-500');
+              setContent('Recording...');
+            }}
             >
             <IconMicrophone size={18} />
             </button>
+
+
+            
             ) }
 
           </div>
