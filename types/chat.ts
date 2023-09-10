@@ -23,4 +23,5 @@ export interface Conversation {
   prompt: string;
   temperature: number;
   folderId: string | null;
+  codeboxId?: string;             // Added to link codebox session to discussion
 }

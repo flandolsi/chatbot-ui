@@ -84,6 +84,8 @@ export const OpenAIStream = async (
     }
   }
 
+
+
   const stream = new ReadableStream({
     async start(controller) {
       const onParse = (event: ParsedEvent | ReconnectInterval) => {
@@ -110,6 +112,7 @@ export const OpenAIStream = async (
       for await (const chunk of res.body as any) {
         parser.feed(decoder.decode(chunk));
       }
+
     },
   });
 

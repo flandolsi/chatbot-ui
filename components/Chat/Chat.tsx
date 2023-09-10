@@ -68,6 +68,28 @@ export const Chat = memo(({ stopConversationRef }: Props) => {
   const chatContainerRef = useRef<HTMLDivElement>(null);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
 
+  const codeinterpreter = async (code) => {
+
+
+    const response =  await fetch('http://127.0.0.1:3100/', {
+      headers: {
+        'Content-Type':'application/json',
+        'Codeboxid': selectedConversation?.codeboxId,
+      },
+      mode: 'cors',
+      method: 'POST',
+      body: code ,
+      
+    })
+
+    let data = await response.json();
+
+
+
+    return data
+  };
+
+
   const handleSend = useCallback(
     async (message: Message, deleteCount = 0, plugin: Plugin | null = null) => {
       if (selectedConversation) {
@@ -138,6 +160,8 @@ export const Chat = memo(({ stopConversationRef }: Props) => {
         }
         if (!plugin) {
           if (updatedConversation.messages.length === 1) {
+
+
             const { content } = message;
             const customName =
               content.length > 30 ? content.substring(0, 30) + '...' : content;
@@ -162,6 +186,7 @@ export const Chat = memo(({ stopConversationRef }: Props) => {
             done = doneReading;
             const chunkValue = decoder.decode(value);
             text += chunkValue;
+
             if (isFirst) {
               isFirst = false;
               const updatedMessages: Message[] = [
@@ -180,6 +205,9 @@ export const Chat = memo(({ stopConversationRef }: Props) => {
               const updatedMessages: Message[] =
                 updatedConversation.messages.map((message, index) => {
                   if (index === updatedConversation.messages.length - 1) {
+
+                    
+
                     return {
                       ...message,
                       content: text,
@@ -191,12 +219,111 @@ export const Chat = memo(({ stopConversationRef }: Props) => {
                 ...updatedConversation,
                 messages: updatedMessages,
               };
+
+              
+
               homeDispatch({
                 field: 'selectedConversation',
                 value: updatedConversation,
               });
             }
+
+            
           }
+
+          
+          // This is where to modify
+
+          console.log(updatedConversation.id)
+          console.log(updatedConversation.codeboxId)
+
+          const original_text = updatedConversation.messages[updatedConversation.messages.length-1].content
+
+
+          // find all occurences ....
+
+          var regexp = /```/g;
+          var foo = original_text;
+          var match, matches = [];
+
+          while ((match = regexp.exec(foo)) != null) {
+            matches.push(match.index);
+          }
+
+          console.log("the matches",matches);
+
+          /// not activated yet
+
+
+
+
+          var begin = original_text.lastIndexOf("```python")
+          var end   = original_text.lastIndexOf("```")
+          console.log(begin)
+          console.log(end)
+
+          if (begin==-1) {begin = 0} else {begin+=9}
+          if (end==-1) {end = original_text.length-1}
+
+          const code = original_text.substring(begin,end)
+          const result_execution = await codeinterpreter(code)
+          const result_execution_json=JSON.parse(JSON.stringify(result_execution))
+
+          let codeContent = result_execution_json['code']
+          let codeboxUIID = result_execution_json['codeboxid']
+          let contentType = result_execution_json['type']
+
+          console.log(contentType)
+          // console.log(codeContent)
+
+          // var blob = new Blob( [codeContent], { type: "image/png" } );
+          // var imageUrl = URL.createObjectURL(blob)
+
+
+          // // const file = new File([codeContent], 'image.png', {
+          // //   type: blob.type,
+          // //   lastModified: Date.now()
+          // // });
+
+          // if (contentType=="image/png"){
+          //   console.log(imageUrl)
+          //   // document.querySelector("#image").src = "data:image/png;base64," + codeContent;
+
+          //   var decodedContent = Buffer(codeContent).toString('base64')
+
+          //   document.querySelector("#image").src = "data:image/png;base64," + codeContent// Base64.strict_encode64(codeContent)
+
+          // }
+
+
+
+          // Check if any codebox is already associated
+
+          updatedConversation.codeboxId=codeboxUIID
+          updatedConversation.messages[updatedConversation.messages.length-1].content = original_text + "the result would be THIS" + "![image]("+"data:image/png;base64," + codeContent+")" 
+
+          // TODO to avoid sending <image> data as part of the conversation
+          
+
+          
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
           saveConversation(updatedConversation);
           const updatedConversations: Conversation[] = conversations.map(
             (conversation) => {
@@ -488,6 +615,10 @@ export const Chat = memo(({ stopConversationRef }: Props) => {
               </>
             )}
           </div>
+
+          
+          {/* <img id="image" alt='what?'/> */}
+
 
           <ChatInput
             stopConversationRef={stopConversationRef}

@@ -87,6 +87,61 @@ export const SettingDialog: FC<Props> = ({ open, onClose }) => {
               <option value="light">{t('Light mode')}</option>
             </select>
 
+            <div className="columns-3">
+              <div className="text-sm font-bold mb-2 text-black dark:text-neutral-200">
+                <label className="switch">
+                  <input type="checkbox"></input>
+                  <span className="slider round"></span>
+                </label>
+                {t('Translate')}
+              </div>
+
+              <div className="text-sm font-bold mb-2 text-black dark:text-neutral-200">
+                <label className="switch">
+                  <input type="checkbox"></input>
+                  <span className="slider round"></span>
+                </label>
+                {t('Translate')}
+              </div>
+
+              <div className="text-sm font-bold mb-2 text-black dark:text-neutral-200">
+                <label className="switch">
+                  <input type="checkbox"></input>
+                  <span className="slider round"></span>
+                </label>
+                {t('Translate')}
+              </div>
+            </div>
+
+
+            <div className="columns-3">
+              <div className="text-sm font-bold mb-2 text-black dark:text-neutral-200">
+                <label className="switch">
+                  <input type="checkbox"></input>
+                  <span className="slider round"></span>
+                </label>
+                {t('Translate')}
+              </div>
+
+              <div className="text-sm font-bold mb-2 text-black dark:text-neutral-200">
+                <label className="switch">
+                  <input type="checkbox"></input>
+                  <span className="slider round"></span>
+                </label>
+                {t('Translate')}
+              </div>
+
+              <div className="text-sm font-bold mb-2 text-black dark:text-neutral-200">
+                <label className="switch">
+                  <input type="checkbox"></input>
+                  <span className="slider round"></span>
+                </label>
+                {t('Translate')}
+              </div>
+            </div>
+
+            
+
             <button
               type="button"
               className="w-full px-4 py-2 mt-6 border rounded-lg shadow border-neutral-500 text-neutral-900 hover:bg-neutral-100 focus:outline-none dark:border-neutral-800 dark:border-opacity-50 dark:bg-white dark:text-black dark:hover:bg-neutral-300"

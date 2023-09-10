@@ -1,7 +1,7 @@
 import { FC } from 'react';
 import { SupportedExportFormats } from '@/types/export';
 
-import {IconMail, IconSum, IconCode, IconGlobe } from '@tabler/icons-react';
+import {IconMail, IconSum, IconCode, IconGlobe, IconCodeOff } from '@tabler/icons-react';
 
 
 import {
@@ -77,6 +77,8 @@ export const ChatInput = ({
   const [isRecording,setIsRecording] = useState(false);
   const [isBlocked,setIsBlocked] = useState(false);
   const [blobURL, setBlobURL] = useState('');
+
+  const [isCodeInterpreter,setIsCodeInterpreter] = useState(false);
 
 
   //File names &   File content
@@ -164,6 +166,26 @@ export const ChatInput = ({
     //console.log(result);
 
   };
+
+  const codeinterpreter = async (e) => {
+    //setContent('The code interpreter is on')
+
+    setIsCodeInterpreter(!isCodeInterpreter)
+
+    const response =  await fetch('http://127.0.0.1:3100/', {
+      headers: {
+        'Content-Type':'application/json',
+      },
+      mode: 'cors',
+      method: 'POST',
+      body: content,
+      
+    })
+
+    let data = await response.json();
+    setContent(data)
+  };
+
   
 
   const start = (e) => {
@@ -214,7 +236,6 @@ export const ChatInput = ({
       return;
     }
 
-        //This runs many times, should put it somewhere else
     // Test implementation
     const newcontent  = content?.replace(/{{(.*?)}}/g, (match, variable) => {
       const index = filenames.indexOf(variable);
@@ -428,19 +449,19 @@ export const ChatInput = ({
           >
 
           <IconCode size={32} />
-          {"Check following code "}
+          {"Code Analyzer"}
           </button>
 
 
           <button
             className="text-sidebar flex w-[180px] flex-shrink-0 cursor-pointer select-none items-center gap-3 rounded-md border border-white/20 p-3 text-white transition-colors duration-200 hover:bg-gray-500/10"
             onClick={() => {
-              setContent("Give inspiration quote on ")
+              setContent("Read this link and tell me about key takeaways ")
             }}
           >
 
           <IconGlobe size={32} />
-          {"Give inspirational quote on "}
+          {"Link Reader"}
           </button>
 
       
@@ -636,6 +657,20 @@ export const ChatInput = ({
 
             
             ) }
+
+          </div>
+
+
+          <div className="absolute right-10 lg:bottom-2 lg:right-20">
+            <button
+              className="flex h-7 w-7 items-center justify-center rounded-sm p-1 text-neutral-800 opacity-60 hover:bg-neutral-200 hover:text-neutral-900 dark:bg-opacity-50 dark:text-neutral-100 dark:hover:text-neutral-200"
+              onClick={() => {
+                codeinterpreter();
+              }}
+              >
+                {isCodeInterpreter? (<IconCode size={18} />):(<IconCodeOff size={18} />)}
+              
+            </button>
 
           </div>
 
