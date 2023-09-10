@@ -241,31 +241,32 @@ export const Chat = memo(({ stopConversationRef }: Props) => {
 
 
           // find all occurences ....
+          var regexp_end = /```/g;
+          var match_end, matches_end = [];
 
-          var regexp = /```/g;
-          var foo = original_text;
-          var match, matches = [];
-
-          while ((match = regexp.exec(foo)) != null) {
-            matches.push(match.index);
+          while ((match_end = regexp_end.exec(original_text)) != null) {
+            matches_end.push(match_end.index);
           }
 
-          console.log("the matches",matches);
+          var code = ""
 
-          /// not activated yet
+          for (let i=0; i< matches_end.length;i+=2 ) 
+          {
+            let temp_string = original_text.substring(matches_end[i],matches_end[i+1])
+
+            // test if it actually python code
+            if (temp_string.includes("```python"))
+            {
+              code += original_text.substring(matches_end[i]+9,matches_end[i+1])
+            }
+          }
+
+          code = code.replace(/>>> /g, '');
+          console.log(code)
+
+          //const code = original_text.substring(begin,end)
 
 
-
-
-          var begin = original_text.lastIndexOf("```python")
-          var end   = original_text.lastIndexOf("```")
-          console.log(begin)
-          console.log(end)
-
-          if (begin==-1) {begin = 0} else {begin+=9}
-          if (end==-1) {end = original_text.length-1}
-
-          const code = original_text.substring(begin,end)
           const result_execution = await codeinterpreter(code)
           const result_execution_json=JSON.parse(JSON.stringify(result_execution))
 
